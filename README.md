@@ -1,24 +1,27 @@
-# Continual Topic Model vs Sequential Online LDA on a Text Stream
+# Continual topic model vs sequential online LDA (20 Newsgroups stream)
 
-**Motivation.** Topic models are often trained on document streams whose topics drift over time, yet standard online LDA treats each time slice mostly as a fresh update. The "Continual neural topic model" (2026, https://aclanthology.org/2026.eacl-long.312/) proposes carrying a global prior forward across time steps so that topics stay coherent and consistent as new data arrives. This experiment asks whether a simple version of that idea helps a classical model.
+## Question
+Can a continual topic model that carries a prior forward across time slices beat a sequential online LDA baseline on topic coherence (NPMI of top-10 words on held-out test documents) and topic stability?
 
-**Question.** Can a continual topic model that carries a prior forward across time slices beat a sequential online LDA baseline on topic coherence and topic stability over a text stream?
+## Dataset
+20 Newsgroups via scikit-learn (`subset="all"`, headers/footers/quotes removed). Stratified 80/20 train/test split with seed 42. The training part is cut into 5 random time slices (no timestamps exist in this data), identical for both models.
 
-**Dataset.** 20 Newsgroups, loaded with scikit-learn's `fetch_20newsgroups` (headers, footers and quotes removed). This is a public corpus and is not the paper's own dataset. It is split 80/20 into train and test with a fixed seed. The training part is cut into 5 random time slices, because the corpus has no timestamps.
+## Models
+- **Baseline:** scikit-learn online LDA (20 topics), `partial_fit` on each slice in order.
+- **Improved:** the same LDA; after each slice the topic-word matrix is blended with the matrix from before that slice (continual prior). The blend weight is chosen by cross-validation on an inner split of the training data over {0, 0.25, 0.5, 0.75}. The test set is not used for selection. The improved model performs no extra LDA fits.
 
-**Baseline vs improved.**
-- *Baseline:* standard sequential online LDA (scikit-learn `LatentDirichletAllocation`, `partial_fit` on each slice, 20 topics). It stands in for the paper's neural model and is not the paper's method.
-- *Improved:* the same online LDA. Before each new slice, the previous topic-word matrix is mixed 50/50 with the current slice's topic-word estimate, acting as a continual global prior.
+## Evaluation
+NPMI coherence of top-10 words on held-out test documents (primary, higher is better), topic stability across slices, and macro-F1 of a logistic regression on document-topic proportions. Results are averaged over seeds 42, 43, 44.
 
-Both models share the same vectorizer, slices, seeds and evaluation code. The main metric is NPMI coherence on held-out test documents. Secondary metrics are topic stability and the macro-F1 of a logistic regression on document-topic proportions.
-
-**How to run**
+## Run
 ```
 pip install -r requirements.txt
 python analysis.py
 ```
+Outputs `results.json` and `figures/coherence_bar.png`.
 
-**Results:** written to `results.json` (and `figures/coherence_bar.png`) when the script finishes.
+## Caveats
+This is a stand-in for the paper's neural CoNTM, not a reproduction of it. The results come from one data split and three seeds.
 
 ## Reference
 
