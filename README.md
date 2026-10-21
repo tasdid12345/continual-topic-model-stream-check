@@ -1,27 +1,26 @@
-# Continual topic model vs sequential online LDA (20 Newsgroups stream)
+# Continual topic model vs online LDA (20 Newsgroups stream)
 
-## Question
-Can a continual topic model that carries a prior forward across time slices beat a sequential online LDA baseline on topic coherence (NPMI of top-10 words on held-out test documents) and topic stability?
+Question: can a continual topic model that carries a prior across time slices beat a sequential online LDA baseline on topic coherence (NPMI on held-out test documents) and topic stability?
 
-## Dataset
-20 Newsgroups via scikit-learn (`subset="all"`, headers/footers/quotes removed). Stratified 80/20 train/test split with seed 42. The training part is cut into 5 random time slices (no timestamps exist in this data), identical for both models.
+## Setup
+- Data: 20 Newsgroups (sklearn `fetch_20newsgroups`, subset=all, headers/footers/quotes removed), stratified 80/20 train/test split, seed 42.
+- Training part is cut into 5 random time slices (no timestamps available).
+- Vocabulary: CountVectorizer, English stop words, 2000 features, min_df=5, fitted on train only.
 
 ## Models
-- **Baseline:** scikit-learn online LDA (20 topics), `partial_fit` on each slice in order.
-- **Improved:** the same LDA; after each slice the topic-word matrix is blended with the matrix from before that slice (continual prior). The blend weight is chosen by cross-validation on an inner split of the training data over {0, 0.25, 0.5, 0.75}. The test set is not used for selection. The improved model performs no extra LDA fits.
+- **Baseline:** sklearn online LDA (20 topics) with default priors, `partial_fit` on each slice in order.
+- **Improved:** same LDA and slices, with the topic-word prior `eta` and a per-slice blend of the topic-word matrix with the pre-slice matrix (weight `mix`). `eta` in {default, 0.02, 0.05, 0.2} and `mix` in {0, 0.25, 0.5, 0.75} are chosen by cross-validation on an inner split of the training data only. The grid includes the baseline setting, so the selected setting is never worse on validation.
 
 ## Evaluation
-NPMI coherence of top-10 words on held-out test documents (primary, higher is better), topic stability across slices, and macro-F1 of a logistic regression on document-topic proportions. Results are averaged over seeds 42, 43, 44.
+- Primary: NPMI coherence of top-10 words, computed on binary held-out test documents, mean over 3 seeds (42, 43, 44).
+- Secondary: topic stability across slices, and macro-F1 / accuracy of logistic regression on document-topic proportions.
 
 ## Run
 ```
 pip install -r requirements.txt
 python analysis.py
 ```
-Outputs `results.json` and `figures/coherence_bar.png`.
-
-## Caveats
-This is a stand-in for the paper's neural CoNTM, not a reproduction of it. The results come from one data split and three seeds.
+Writes `results.json` and `figures/coherence_bar.png`. Runtime is a few minutes on CPU.
 
 ## Reference
 
