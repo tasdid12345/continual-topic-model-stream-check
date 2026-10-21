@@ -1,0 +1,35 @@
+{
+  "question": "Can a continual topic model that carries a prior forward across time slices beat a sequential online LDA baseline on topic coherence and topic stability over a text stream?",
+  "method": "Stratified 80/20 split of 20 Newsgroups; training part cut into 5 random time slices; sequential online LDA (20 topics) baseline with default priors vs an improved online LDA whose topic-word prior eta and per-slice prior-blend weight are chosen jointly by cross-validation on an inner split of the training data over eta in {default, 0.02, 0.05, 0.2} x mix in {0, 0.25, 0.5, 0.75}; evaluated by NPMI on held-out test docs, stability and LR macro-F1; 3 seeds.",
+  "dataset": {
+    "name": "20 Newsgroups (sklearn fetch_20newsgroups, subset=all, headers/footers/quotes removed)",
+    "source_url": "https://ndownloader.figshare.com/files/5975967",
+    "n_rows": 18846,
+    "n_train": 15076,
+    "n_test": 3770,
+    "same_as_paper": false,
+    "baseline_is_papers_method": false
+  },
+  "metric_name": "NPMI topic coherence of top-10 words on held-out test documents",
+  "higher_is_better": true,
+  "baseline": "Standard sequential online LDA (sklearn LatentDirichletAllocation with default priors, partial_fit per slice, 20 topics); stand-in, not the paper's neural CoNTM.",
+  "improved": "Same online LDA and slices, with the topic-word prior and a continual per-slice prior blend chosen by CV on training data only (grid includes the baseline setting). No extra data or extra fits on test.",
+  "metrics": {
+    "baseline_score": 0.22809788124281546,
+    "baseline_score_std": 0.017846634651996443,
+    "improved_score": 0.22939102405418196,
+    "improved_score_std": 0.019490850838506223,
+    "improvement": 0.0012931428113664989,
+    "baseline_stability": 0.6319923132423133,
+    "improved_stability": 0.7031579531579532,
+    "baseline_f1": 0.33194854696899384,
+    "improved_f1": 0.3245743739971805,
+    "baseline_accuracy": 0.35985853227232534,
+    "improved_accuracy": 0.35269672855879747,
+    "improved_mix_selected_cv": 0.25,
+    "improved_topic_word_prior_selected_cv": 0.05,
+    "tuning_validation_npmi": 0.26830420506260927,
+    "n_seeds": 3
+  },
+  "notes": "Topic stability compares index-aligned topics across consecutive slices. The improved model's hyperparameters (topic_word_prior eta and blend weight mix) are selected by a small inner CV on training data only (seed 42), run before the test evaluation; the grid contains the baseline setting, so the selected setting is never worse than the baseline on the validation split. Test-set gains are not guaranteed and are reported as measured. The 20 Newsgroups data has no timestamps, so random slices simulate a stream. Results are from a small seed count and a single data split."
+}
